@@ -9,4 +9,10 @@ pluginManagement {
 	}
 }
 
-rootProject.name = 'stalprojeckt-1.20.1'
+plugins {
+	// Автоматически скачивает JDK 17, если его нет в системе:
+	// сборка не зависит от локальных путей и JAVA_HOME.
+	id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
+rootProject.name = 'Last-Trial-of-Relics'
