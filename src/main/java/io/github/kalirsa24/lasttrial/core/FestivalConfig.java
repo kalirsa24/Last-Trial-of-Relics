@@ -53,6 +53,11 @@ public final class FestivalConfig {
 	public boolean announceEveryStage = true;
 	/** Сколько тиков забег терпит отсутствие загруженной Реликвии, прежде чем замереть. */
 	public int relicMissingGraceTicks = 200;
+	/**
+	 * Сколько секунд забег ждёт выгруженную арену, прежде чем закрыться.
+	 * 0 — ждать бесконечно (старое поведение).
+	 */
+	public int arenaUnloadStopSeconds = 300;
 	/** Сколько забегов сервер тянет одновременно. */
 	public int maxActiveTrials = 3;
 	/**
@@ -85,6 +90,9 @@ public final class FestivalConfig {
 					}
 					if (!raw.has("maxActiveTrials")) {
 						parsed.maxActiveTrials = 3;
+					}
+					if (!raw.has("arenaUnloadStopSeconds")) {
+						parsed.arenaUnloadStopSeconds = 300;
 					}
 					loaded = parsed;
 				}
@@ -124,6 +132,7 @@ public final class FestivalConfig {
 		spawnRadiusMax = clamp(spawnRadiusMax, spawnRadiusMin + 1.0D, 96.0D);
 		relicMissingGraceTicks = clamp(relicMissingGraceTicks, 20, 20 * 60 * 10);
 		maxActiveTrials = clamp(maxActiveTrials, 1, 16);
+		arenaUnloadStopSeconds = clamp(arenaUnloadStopSeconds, 0, 3600);
 
 		if (stageShares == null || stageShares.length == 0) {
 			stageShares = new double[]{0.25D, 0.30D, 0.45D};

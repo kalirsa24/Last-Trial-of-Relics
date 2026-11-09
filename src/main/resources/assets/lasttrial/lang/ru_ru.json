@@ -183,7 +183,7 @@
   "good.lasttrial.skip_now": "Пропустить волну",
   "good.lasttrial.hard_mode": "Хард-режим",
   "message.lasttrial.mode_no_trial": "Работает только во время испытания",
-  "message.lasttrial.hard_on": "ХАРД-РЕЖИМ: враги крепче и злее, монеты ×3, трофеи ×2!",
+  "message.lasttrial.hard_on": "ХАРД-РЕЖИМ: враги крепче и злее, монеты ×2, награды ×2!",
   "message.lasttrial.hard_already": "Хард-режим уже включён",
   "message.lasttrial.skip_now_done": "Волна пропущена",
   "message.lasttrial.summoner_killed": "Призыватель убит: +30 монет. Вернётся через 30 секунд",
@@ -254,5 +254,6 @@
   "item.lasttrial.trophy.unbound": "Награда празднества (без владельца)",
   "tooltip.lasttrial.trophy_unbound": "Не привязана: не засчитывается никому",
   "tooltip.lasttrial.trophy_personal": "Персональная: передать другому игроку нельзя",
-  "message.lasttrial.trophy_migrated": "Старые награды привязаны к вам: %s шт."
+  "message.lasttrial.trophy_migrated": "Старые награды привязаны к вам: %s шт.",
+  "message.lasttrial.arena_unloaded_stop": "Арена была выгружена %s мин — забег закрыт, чтобы не держать слот."
 }

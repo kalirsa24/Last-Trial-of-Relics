@@ -127,7 +127,7 @@ public class ServerEvents {
 			// Монет за убийство — по «цене» моба в очках волны
 			int reward = (int) Math.max(1, Math.round(MobValues.pointsOf(mob)));
 			if (trial != null && trial.hardMode()) {
-				reward *= 3;
+				reward *= 2;
 			}
 			player.getInventory().add(new ItemStack(ModItems.FESTIVAL_COIN, reward));
 		});

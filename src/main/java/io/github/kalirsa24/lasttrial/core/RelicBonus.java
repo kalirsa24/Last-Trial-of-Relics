@@ -19,9 +19,9 @@ import java.util.List;
 public final class RelicBonus {
 
 	/** Сколько Реликвий в инвентаре учитывается одновременно. */
-	public static final int MAX_RELICS = 4;
-	/** Потолок суммарного снижения. */
-	public static final double CAP = 0.75D;
+	public static final int MAX_RELICS = 3;
+	/** Потолок суммарного снижения: вместе с правилом «мобы бьют вполсилы» хватает. */
+	public static final double CAP = 0.60D;
 
 	private RelicBonus() {
 	}

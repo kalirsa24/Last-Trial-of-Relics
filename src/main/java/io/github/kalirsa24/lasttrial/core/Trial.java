@@ -108,6 +108,9 @@ public final class Trial {
 	/** Время прошлого тика — для определения паузы. */
 	private long lastTickMillis;
 
+	/** Сколько тиков арена была вне загруженных чанков. */
+	private int unloadedTicks;
+
 	/** Присутствие игроков у арены: копится 5 минут без отлучек дольше 15 секунд. */
 	private final Map<UUID, Presence> presence = new HashMap<>();
 	private int presenceTimer;
@@ -198,10 +201,17 @@ public final class Trial {
 		}
 		lastTickMillis = now;
 
-		// Арена вне загруженных чанков — забег просто ждёт, таймеры стоят
+		// Арена вне загруженных чанков: забег ждёт, но не бесконечно.
+		// Иначе выгруженная арена «замораживает» слот навсегда и занимает лимит забегов.
 		if (!level.isLoaded(relicPos)) {
+			int limitSeconds = FestivalConfig.get().arenaUnloadStopSeconds;
+			if (limitSeconds > 0 && ++unloadedTicks > limitSeconds * 20) {
+				broadcast(Component.translatable("message.lasttrial.arena_unloaded_stop", limitSeconds / 60));
+				stop();
+			}
 			return;
 		}
+		unloadedTicks = 0;
 
 		// Блок снят или сломан: даём короткую паузу и закрываем забег
 		if (!(level.getBlockEntity(relicPos) instanceof RelicBlockEntity)) {

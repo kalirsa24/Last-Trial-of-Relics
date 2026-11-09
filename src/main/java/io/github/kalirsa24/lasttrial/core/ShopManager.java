@@ -289,7 +289,7 @@ public class ShopManager {
 		all.add(new Good(SKIP_NOW_ID, c, Component.translatable("good.lasttrial.skip_now"),
 				new ItemStack(ModItems.WAVE_SKIP), List.of(), 15, RelicTier.BASIC, 0, 0));
 		all.add(new Good(HARD_MODE_ID, c, Component.translatable("good.lasttrial.hard_mode"),
-				new ItemStack(Items.NETHER_STAR), List.of(), 60, RelicTier.BASIC, 0, 0));
+				new ItemStack(Items.NETHER_STAR), List.of(), 120, RelicTier.BASIC, 0, 0));
 		all.add(new Good(STOP_WAVE_ID, c, Component.translatable("good.lasttrial.stop_wave"),
 				new ItemStack(Items.BARRIER), List.of(), 0, RelicTier.BASIC, 0, 0));
 		all.add(new Good(RESUME_WAVE_ID, c, Component.translatable("good.lasttrial.resume_wave"),
@@ -360,34 +360,21 @@ public class ShopManager {
 
 	/** Множитель цен после вложений в древо: больше 20 наград — всё +20%. */
 	public static double priceMultiplier(ServerPlayer player) {
-		return SkillManager.spentTrophies(player) > 20 ? 1.2D : 1.0D;
+		return Economy.priceMultiplier(SkillManager.spentTrophies(player));
 	}
 
 	/** Итоговая цена в монетах с учётом развития игрока. */
 	public static int finalPrice(Good good, ServerPlayer player) {
-		return (int) Math.ceil(good.price() * priceMultiplier(player));
+		return Economy.finalPrice(good.price(), SkillManager.spentTrophies(player));
 	}
 
 	/**
-	 * Наценка на оружие и патроны по типу ствола:
-	 * пистолеты +10, автоматы и ПП +20, снайперки/дробовики/пулемёты и патроны ×2.
+	 * Наценка на оружие и патроны по типу ствола.
+	 *
+	 * @see Economy#markup(String, int)
 	 */
 	public static int markup(String itemId, int base) {
-		String path = itemId.toLowerCase(java.util.Locale.ROOT);
-		if (path.contains("sniper") || path.contains("awp") || path.contains("shotgun")
-				|| path.contains("lmg") || path.contains("machinegun") || path.contains("heavy")
-				|| path.contains("ammo") || path.contains("bullet") || path.contains("cartridge")) {
-			return base * 2;
-		}
-		if (path.contains("pistol") || path.contains("handgun") || path.contains("glock")
-				|| path.contains("deagle") || path.contains("revolver")) {
-			return base + 10;
-		}
-		if (path.contains("rifle") || path.contains("smg") || path.contains("carbine")
-				|| path.contains("assault") || path.contains("ak") || path.contains("m4")) {
-			return base + 20;
-		}
-		return base;
+		return Economy.markup(itemId, base);
 	}
 
 	// ------------------------------------------------------------------
