@@ -32,7 +32,7 @@
 
 `FestivalMod#onInitialize()` выполняется при запуске игры/сервера и делает строго по порядку:
 
-1. `FestivalConfig.load()` — читает `config/festival.json`, при отсутствии создаёт файл
+1. `FestivalConfig.load()` — читает `config/lasttrial.json`, при отсутствии создаёт файл
    с дефолтами. Все числа волн/таймингов живут там, а не в коде.
 2. `ModBlocks.register()` — блоки (Реликвия ×3, плитка арены).
 3. `ModItems.register()` — предметы. **Важно:** предметы Реликвий создаются с ссылкой на
@@ -42,7 +42,7 @@
 6. `ModItems.addToCreativeTabs()` — дублирование в ванильные вкладки.
 7. `ModCreativeTabs.register()` — отдельная вкладка «Празднество».
 8. `FestivalNetworking.registerServerHandlers()` — приём пакетов от клиента.
-9. `FestivalCommands.register()` — команды `/festival` и `/fest`.
+9. `FestivalCommands.register()` — команды `/lasttrial` и `/ltor`.
 10. `ServerEvents.register()` — тики, смерти, вход игрока, загрузка мира.
 
 Клиентская часть (`FestivalClient#onInitializeClient`) регистрирует рендереры мобов,
@@ -117,7 +117,7 @@ Trial.tick (каждый серверный тик, через TrialManager.tick
      × (1 − бонус_реликвий − навык_Оберег)
 ```
 
-- Реликвии в инвентаре: 15/30/45%, максимум 4 штуки и не больше 75%.
+- Реликвии в инвентаре: 15/30/45%, максимум 3 штуки и не больше 60%.
 - «Оберег»: −3% за уровень, максимум −15%.
 
 **Тотем усиления** — 15 тиров, прибавка к исходящему урону:
@@ -151,7 +151,7 @@ Trial.tick (каждый серверный тик, через TrialManager.tick
 - при первом входе после обновления старые награды привязываются к игроку один раз
   (`SkillManager.migrateLegacyTrophies`, флаг в `SkillData`).
 
-Тратится в древе навыков (`/festival skill`) и как альтернативная цена в магазине.
+Тратится в древе навыков (`/lasttrial skill`) и как альтернативная цена в магазине.
 
 **Цены и множители:**
 
@@ -211,7 +211,7 @@ Trial.tick (каждый серверный тик, через TrialManager.tick
 
 ## 8. Древо навыков
 
-`/festival skill` → `SkillManager.open` → пакет `open_skills` → `SkillScreen`.
+`/lasttrial skill` → `SkillManager.open` → пакет `open_skills` → `SkillScreen`.
 
 Пять ветвей (`SkillManager.Skill`):
 
@@ -263,19 +263,20 @@ Trial.tick (каждый серверный тик, через TrialManager.tick
 
 ## 11. Полный перечень файлов
 
-### `src/main/java/com/example/festival/`
+### `src/main/java/io/github/kalirsa24/lasttrial/`
 
 | Файл | Роль | Связи |
 |---|---|---|
 | `FestivalMod.java` | Точка входа, порядок инициализации, логгер | Все реестры, команды, события |
 | `block/RelicBlock.java` | Блок-алтарь: ПКМ — старт, Shift+ПКМ — магазин, тикер блочной сущности | `TrialManager`, `ShopManager`, `RelicBlockEntity` |
 | `blockentity/RelicBlockEntity.java` | Здоровье алтаря, регенерация, сохранение/восстановление забега в NBT | `Trial`, `TrialManager`, `ModBlockEntities` |
-| `command/FestivalCommands.java` | Все команды `/festival`: start, shop, buy, skill, lives, wave, arena, admin | `GameManager`, `ShopManager`, `SkillManager`, `ArenaManager` |
+| `command/FestivalCommands.java` | Все команды `/lasttrial`: start, shop, buy, skill, lives, wave, arena, admin | `GameManager`, `ShopManager`, `SkillManager`, `ArenaManager` |
 | `core/ArenaData.java` | SavedData арен и переопределений волн, ручная сериализация в NBT | `ArenaManager` |
 | `core/ArenaManager.java` | Реестр арен, регистрация/снятие, снимок и восстановление пола | `ArenaData`, `ArenaValidator` |
 | `core/ArenaValidator.java` | Проверка площадки 20×20 / 30×30 и неба, возвращает проценты | `ArenaManager`, `RelicItem`, `ArenaTooltip` |
+| `core/Economy.java` | Чистая математика цен: наценки на оружие, множитель за вложения, округление | `ShopManager`, тесты |
 | `core/DifficultyScaler.java` | Масштабирование HP/урона мобов от волны, этапа, числа игроков, харда | `Trial`, `FestivalConfig` |
-| `core/FestivalConfig.java` | Конфиг `config/festival.json`: этапы, дрейп, таймауты, радиусы, флаги | Все, кто читает тайминги |
+| `core/FestivalConfig.java` | Конфиг `config/lasttrial.json`: этапы, дрейп, таймауты, радиусы, флаги | Все, кто читает тайминги |
 | `core/GameManager.java` | Фасад для команд/предметов: старт, стоп, жизни, поиск Реликвии | `TrialManager`, `ArenaValidator` |
 | `core/MobValues.java` | «Ценность» моба в очках/монетах | `ServerEvents`, `WaveBudget` |
 | `core/Msg.java` | Один хелпер над хотбаром (`displayClientMessage(..., true)`) | Все сообщения |
@@ -325,7 +326,7 @@ Trial.tick (каждый серверный тик, через TrialManager.tick
 | `registry/ModEntities.java` | Регистрация пяти мобов и их атрибутов | `entity/*` |
 | `registry/ModItems.java` | Регистрация всех предметов | `item/*`, `ModBlocks` |
 
-### `src/client/java/com/example/festival/client/`
+### `src/client/java/io/github/kalirsa24/lasttrial/client/`
 
 | Файл | Роль |
 |---|---|
@@ -342,22 +343,34 @@ Trial.tick (каждый серверный тик, через TrialManager.tick
 | `festival.mixins.json` | Список миксинов (`LivingEntityDamageMixin`) |
 | `festival.accesswidener` | Доступ к защищённым полям ванильных классов, если нужен |
 | `pack.mcmeta` | Версия формата ресурсов/данных |
-| `assets/festival/icon.png` | Иконка мода |
-| `assets/festival/lang/ru_ru.json` | Все русские строки: предметы, сообщения, GUI, навыки |
-| `assets/festival/lang/en_us.json` | Английский дубль (ключи совпадают один в один) |
-| `assets/festival/blockstates/*.json` | Состояния блоков: Реликвия ×3, плитка арены |
-| `assets/festival/models/block/*.json` | Модели блоков (куб, верх/низ отдельными текстурами у Реликвии) |
-| `assets/festival/models/item/*.json` | Модели предметов; `totem_of_power.json` содержит `overrides` по `CustomModelData` (1/2/3 — синие/зелёные/красные глаза) |
-| `assets/festival/textures/block/*.png` | Текстуры алтарей и плитки арены (мшистый камень со светящимся крестом) |
-| `assets/festival/textures/item/*.png` | Тотемы трёх цветов, монета, награда, пир, ключ, пропуск |
-| `data/festival/loot_tables/blocks/*.json` | Дроп блоков (алтари и плитка) |
-| `data/festival/loot_tables/chests/festival_key.json` | Лут сундука из ключа: тотемы по весам, монеты, пир |
-| `data/festival/recipes/*.json` | Крафты алтарей и плитки |
-| `data/festival/waves.json` | Явные составы волн (пустой массив = всё процедурно) |
+| `assets/lasttrial/icon.png` | Иконка мода |
+| `assets/lasttrial/lang/ru_ru.json` | Все русские строки: предметы, сообщения, GUI, навыки |
+| `assets/lasttrial/lang/en_us.json` | Английский дубль (ключи совпадают один в один) |
+| `assets/lasttrial/blockstates/*.json` | Состояния блоков: Реликвия ×3, плитка арены |
+| `assets/lasttrial/models/block/*.json` | Модели блоков (куб, верх/низ отдельными текстурами у Реликвии) |
+| `assets/lasttrial/models/item/*.json` | Модели предметов; `totem_of_power.json` содержит `overrides` по `CustomModelData` (1/2/3 — синие/зелёные/красные глаза) |
+| `assets/lasttrial/textures/block/*.png` | Текстуры алтарей и плитки арены (мшистый камень со светящимся крестом) |
+| `assets/lasttrial/textures/item/*.png` | Тотемы трёх цветов, монета, награда, пир, ключ, пропуск |
+| `data/lasttrial/loot_tables/blocks/*.json` | Дроп блоков (алтари и плитка) |
+| `data/lasttrial/loot_tables/chests/festival_key.json` | Лут сундука из ключа: тотемы по весам, монеты, пир |
+| `data/lasttrial/recipes/*.json` | Крафты алтарей и плитки |
+| `data/lasttrial/waves.json` | Явные составы волн (пустой массив = всё процедурно) |
 
 ---
 
-## 12. Ограничения и компромиссы
+## 12. Тесты и CI
+
+- `src/test/java/.../core/EconomyTest.java` — наценки по типам стволов (пистолеты,
+  автоматы, снайперки, патроны), порог множителя цен, округление.
+- `src/test/java/.../core/RelicTierTest.java` — число волн, совместимость тиров,
+  fallback для неизвестного id.
+- `.github/workflows/build.yml` — сборка и тесты на каждый push/PR в `main`,
+  артефакт `build/libs/*.jar` прикладывается к прогону.
+
+Тесты намеренно не трогают Minecraft-мир: проверяется математика, которую легко
+сломать правкой баланса.
+
+## 13. Ограничения и компромиссы
 
 1. **Каталог TACZ — эвристика.** Без API мода тип оружия определяется по id
    (`pistol`, `rifle`, `sniper`, `ammo`). Экзотические имена попадут в «Оружие»
@@ -368,6 +381,6 @@ Trial.tick (каждый серверный тик, через TrialManager.tick
    бесполезен чужому — владелец в NBT.
 4. **Лимит забегов** задаётся в конфиге (`maxActiveTrials`, по умолчанию 3) и действует
    на новые старты; уже идущие забеги после перезапуска восстанавливаются все.
-5. **Правила урона** отключаются флагом `damageRules` в `config/festival.json`, если
+5. **Правила урона** отключаются флагом `damageRules` в `config/lasttrial.json`, если
    другой мод на урон/броню конфликтует с миксином.
 6. **Проверка площадки** считает пол по `blocksMotion()`; вода и листва полом не считаются.

@@ -3,11 +3,11 @@
 	"id": "lasttrial",
 	"version": "${version}",
 	"name": "Last Trial of Relics",
-	"description": "Last Trial of Relics: defend the Relic through waves of mobs, upgrade totems and skills. Fabric 1.20.1 port.",
+	"description": "Defend the Relic through waves of mobs: 15 tiers of power totems, a shop, a permanent skill tree and a x2 presence bonus. Fabric 1.20.1.",
 	"authors": [
 		"stal"
 	],
-	"license": "All Rights Reserved",
+	"license": "MIT",
 	"icon": "assets/lasttrial/icon.png",
 	"accessWidener": "lasttrial.accesswidener",
 	"mixins": [
