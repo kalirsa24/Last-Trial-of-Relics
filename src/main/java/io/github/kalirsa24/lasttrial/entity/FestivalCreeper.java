@@ -7,8 +7,12 @@ import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.level.Level;
 
 /**
- * Крипер арены: втрое больше HP. Взрывы ломают стены,
- * а пол восстанавливается из снимка арены (см. ArenaManager#restoreFloor).
+ * Крипер арены: втрое больше HP.
+ *
+ * Взрыв по умолчанию не разрушает блоки ({@code creeperBlockDamage=false}):
+ * на сервере крипер, гоняющийся за игроком, иначе сносит чужие постройки
+ * далеко за пределами арены. Урон по существам сохраняется — крипер остаётся
+ * угрозой, но не инструментом гриферства.
  */
 public class FestivalCreeper extends Creeper {
 
@@ -26,4 +30,7 @@ public class FestivalCreeper extends Creeper {
 	public boolean removeWhenFarAway(double distanceToClosestPlayer) {
 		return false;
 	}
+
+	// Взрыв без разрушения блоков реализован в CreeperExplosionMixin:
+	// Creeper#explodeCreeper объявлен final и не переопределяется.
 }

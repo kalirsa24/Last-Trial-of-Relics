@@ -80,6 +80,22 @@ public final class FestivalConfig {
 	 * на урон/броню конфликтует с миксином.
 	 */
 	public boolean damageRules = true;
+	/**
+	 * Мобы празднества могут прокапывать проход к алтарю. Копают только
+	 * внутри зоны арены и только «обычные» блоки — чужие постройки и
+	 * неразрушимые блоки не трогают.
+	 */
+	public boolean mobDigging = true;
+	/**
+	 * Взрывы криперов арены ломают блоки. По умолчанию выключено: иначе
+	 * крипер сносит постройки далеко за пределами площадки.
+	 */
+	public boolean creeperBlockDamage = false;
+	/**
+	 * Защита арены: во время забега посторонние не могут ломать и ставить
+	 * блоки в зоне площадки. Владелец арены и операторы — могут.
+	 */
+	public boolean protectArena = true;
 
 	/** Пакетный доступ — нужен тестам слияния конфига. */
 	FestivalConfig() {
@@ -155,6 +171,9 @@ public final class FestivalConfig {
 				target.arenaUnloadStopSeconds);
 		target.maxActiveTrials = intOr(raw, "maxActiveTrials", target.maxActiveTrials);
 		target.damageRules = boolOr(raw, "damageRules", target.damageRules);
+		target.mobDigging = boolOr(raw, "mobDigging", target.mobDigging);
+		target.creeperBlockDamage = boolOr(raw, "creeperBlockDamage", target.creeperBlockDamage);
+		target.protectArena = boolOr(raw, "protectArena", target.protectArena);
 
 		JsonElement shares = raw.get("stageShares");
 		if (shares != null && shares.isJsonArray()) {

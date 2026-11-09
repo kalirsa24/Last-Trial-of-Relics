@@ -256,5 +256,7 @@
   "tooltip.lasttrial.trophy_personal": "Персональная: передать другому игроку нельзя",
   "message.lasttrial.trophy_migrated": "Старые награды привязаны к вам: %s шт.",
   "message.lasttrial.arena_unloaded_stop": "Арена была выгружена %s мин — забег закрыт, чтобы не держать слот.",
-  "message.lasttrial.arena_foreign_start": "Это арена игрока %s — запустить испытание может только владелец"
+  "message.lasttrial.arena_foreign_start": "Это арена игрока %s — запустить испытание может только владелец",
+  "message.lasttrial.arena_locked": "Арена под защитой: во время забега здесь строите только вы или оператор",
+  "message.lasttrial.relic_locked": "Реликвию нельзя сломать во время испытания — сначала остановите забег"
 }

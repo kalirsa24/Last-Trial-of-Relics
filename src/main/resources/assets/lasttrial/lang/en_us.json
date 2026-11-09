@@ -256,5 +256,7 @@
   "tooltip.lasttrial.trophy_personal": "Personal: cannot be given to another player",
   "message.lasttrial.trophy_migrated": "Legacy trophies bound to you: %s",
   "message.lasttrial.arena_unloaded_stop": "The arena stayed unloaded for %s min — the run was closed to free the slot.",
-  "message.lasttrial.arena_foreign_start": "This arena belongs to %s — only the owner can start the trial"
+  "message.lasttrial.arena_foreign_start": "This arena belongs to %s — only the owner can start the trial",
+  "message.lasttrial.arena_locked": "The arena is protected: only the owner or an operator can build here during a run",
+  "message.lasttrial.relic_locked": "The Relic cannot be broken during a trial — stop the run first"
 }

@@ -7,6 +7,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -30,6 +32,8 @@ public class RelicAttackGoal extends Goal {
 	private static final double MOVE_EPSILON = 0.0025D;
 	/** Как далеко вперёд моб ломает мешающий блок. */
 	private static final int REACH = 3;
+	/** Максимальная прочность блока, который моб вообще может продолбить. */
+	private static final float MAX_DIG_HARDNESS = 10.0F;
 	/**
 	 * Входящий урон по Реликвии ×2: алтарь — главная цель волны,
 	 * поэтому мобы бьют его вдвое больнее, чем обычные блоки-суррогаты.
@@ -158,11 +162,49 @@ public class RelicAttackGoal extends Goal {
 		this.digCooldown = this.digInterval;
 
 		BlockPos blocker = findBlocker(relic);
-		if (blocker != null) {
+		if (blocker != null && canDig(blocker, relic)) {
 			this.mob.level().destroyBlock(blocker, false);
 			this.mob.swing(InteractionHand.MAIN_HAND);
 			this.stuckTicks = 0;
 		}
+	}
+
+	/**
+	 * Можно ли мобу ломать этот блок.
+	 *
+	 * Ограничения — чтобы мод нельзя было использовать как гриферский
+	 * инструмент: копаем только внутри зоны арены, только выше пола,
+	 * не трогаем неразрушимые блоки и всё прочнее {@link #MAX_DIG_HARDNESS}
+	 * (обсидиановая стена остаётся рабочей защитой).
+	 */
+	private boolean canDig(BlockPos pos, BlockPos relic) {
+		if (!FestivalConfig.get().mobDigging) {
+			return false;
+		}
+		int dx = Math.abs(pos.getX() - relic.getX());
+		int dz = Math.abs(pos.getZ() - relic.getZ());
+		int dy = pos.getY() - relic.getY();
+		if (dx > ArenaValidator.RADIUS + 1 || dz > ArenaValidator.RADIUS + 1) {
+			return false;
+		}
+		if (dy < 0 || dy > 4) {
+			return false;
+		}
+
+		BlockState state = this.mob.level().getBlockState(pos);
+		if (!state.getFluidState().isEmpty()) {
+			return false;
+		}
+		Block block = state.getBlock();
+		if (block == Blocks.BEDROCK || block == Blocks.BARRIER
+				|| block == Blocks.COMMAND_BLOCK || block == Blocks.CHAIN_COMMAND_BLOCK
+				|| block == Blocks.REPEATING_COMMAND_BLOCK || block == Blocks.STRUCTURE_BLOCK
+				|| block == Blocks.JIGSAW || block == Blocks.END_PORTAL_FRAME
+				|| block == Blocks.END_PORTAL || block == Blocks.NETHER_PORTAL
+				|| block == Blocks.REINFORCED_DEEPSLATE) {
+			return false;
+		}
+		return block.defaultDestroyTime() <= MAX_DIG_HARDNESS;
 	}
 
 	/**

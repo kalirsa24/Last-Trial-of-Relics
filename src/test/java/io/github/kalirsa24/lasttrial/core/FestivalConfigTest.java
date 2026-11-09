@@ -38,6 +38,10 @@ class FestivalConfigTest {
 		assertTrue(config.damageRules);
 		assertTrue(config.spawnEffects);
 		assertTrue(config.announceEveryStage);
+		// серверная безопасность: защита включена, гриферство выключено
+		assertTrue(config.protectArena);
+		assertTrue(config.mobDigging);
+		assertFalse(config.creeperBlockDamage);
 	}
 
 	@Test

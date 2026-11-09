@@ -271,6 +271,7 @@ Trial.tick (каждый серверный тик, через TrialManager.tick
 | `block/RelicBlock.java` | Блок-алтарь: ПКМ — старт, Shift+ПКМ — магазин, тикер блочной сущности | `TrialManager`, `ShopManager`, `RelicBlockEntity` |
 | `blockentity/RelicBlockEntity.java` | Здоровье алтаря, регенерация, сохранение/восстановление забега в NBT | `Trial`, `TrialManager`, `ModBlockEntities` |
 | `command/FestivalCommands.java` | Все команды `/lasttrial`: start, shop, buy, skill, lives, wave, arena, admin | `GameManager`, `ShopManager`, `SkillManager`, `ArenaManager` |
+| `core/ArenaGuard.java` | Защита зоны арены: кто может ломать и ставить блоки во время забега | `ServerEvents`, `TrialManager` |
 | `core/ArenaData.java` | SavedData арен (с измерением) и переопределений волн, ручная сериализация в NBT | `ArenaManager` |
 | `core/ArenaManager.java` | Реестр арен, регистрация/снятие, снимок и восстановление пола | `ArenaData`, `ArenaValidator` |
 | `core/ArenaValidator.java` | Проверка площадки 20×20 / 30×30 и неба, возвращает проценты | `ArenaManager`, `RelicItem`, `ArenaTooltip` |
@@ -312,6 +313,7 @@ Trial.tick (каждый серверный тик, через TrialManager.tick
 | `item/TotemOfPower.java` | Таблица 15 тиров, два лучших тотема, поиск для смерти | Миксин, GUI, лут |
 | `item/TrophyItem.java` | Персональная награда: привязка, выдача, запрет контейнеров | `RewardManager`, `ShopManager` |
 | `item/WaveSkipItem.java` | Пропуск 3 волн с усилением следующей | `GameManager` |
+| `mixin/CreeperExplosionMixin.java` | Взрыв крипера арены без разрушения блоков | `FestivalCreeper`, `FestivalConfig` |
 | `mixin/LivingEntityDamageMixin.java` | Исходящий/входящий урон: тотемы, Реликвии, навыки, роли | `TotemOfPower`, `SkillManager`, `RelicBonus` |
 | `network/BuyItemPayload.java` | C→S: id товара | `ShopManager` |
 | `network/BuySkillPayload.java` | C→S: id ветки навыка | `SkillManager` |
@@ -340,7 +342,7 @@ Trial.tick (каждый серверный тик, через TrialManager.tick
 | Файл | Роль |
 |---|---|
 | `fabric.mod.json` | Метаданные мода: id, зависимости, точки входа, миксины, access widener |
-| `festival.mixins.json` | Список миксинов (`LivingEntityDamageMixin`) |
+| `lasttrial.mixins.json` | Список миксинов (`LivingEntityDamageMixin`, `CreeperExplosionMixin`) |
 | `festival.accesswidener` | Доступ к защищённым полям ванильных классов, если нужен |
 | `pack.mcmeta` | Версия формата ресурсов/данных |
 | `assets/lasttrial/icon.png` | Иконка мода |

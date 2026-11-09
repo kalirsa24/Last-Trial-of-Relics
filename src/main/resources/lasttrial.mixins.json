@@ -4,7 +4,8 @@
   "package": "io.github.kalirsa24.lasttrial.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "LivingEntityDamageMixin"
+    "LivingEntityDamageMixin",
+    "CreeperExplosionMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -5,11 +5,14 @@ import io.github.kalirsa24.lasttrial.core.Msg;
 import io.github.kalirsa24.lasttrial.entity.FestivalSummoner;
 import io.github.kalirsa24.lasttrial.item.TotemOfPower;
 import io.github.kalirsa24.lasttrial.registry.ModItems;
+import io.github.kalirsa24.lasttrial.block.RelicBlock;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
+import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -18,7 +21,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.monster.Phantom;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 
 public class ServerEvents {
@@ -94,6 +99,41 @@ public class ServerEvents {
 			Msg.overlay(player, Component.translatable("message.lasttrial.totem_saved",
 					TotemOfPower.roman(tier)));
 			return false;
+		});
+
+		// Защита арены: во время забега посторонние не ломают блоки в зоне площадки.
+		// Отдельно запрещаем ломать саму Реликвию — это мгновенно обрывает забег
+		// и выкидывает предмет.
+		PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, blockEntity) -> {
+			if (!(world instanceof ServerLevel level) || !(player instanceof ServerPlayer serverPlayer)) {
+				return true;
+			}
+			Trial relicTrial = TrialManager.at(level, pos);
+			if (state.getBlock() instanceof RelicBlock && relicTrial != null && relicTrial.isRunning()) {
+				Msg.overlay(serverPlayer, Component.translatable("message.lasttrial.relic_locked"));
+				return false;
+			}
+			if (!ArenaGuard.canModify(serverPlayer, level, pos)) {
+				Msg.overlay(serverPlayer, Component.translatable("message.lasttrial.arena_locked"));
+				return false;
+			}
+			return true;
+		});
+
+		// То же для установки блоков: закрываем площадку от застройки чужими.
+		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
+			if (world.isClientSide() || !(player instanceof ServerPlayer serverPlayer)
+					|| !(world instanceof ServerLevel level)) {
+				return InteractionResult.PASS;
+			}
+			if (!(player.getItemInHand(hand).getItem() instanceof BlockItem)) {
+				return InteractionResult.PASS;
+			}
+			if (!ArenaGuard.canModify(serverPlayer, level, hitResult.getBlockPos())) {
+				Msg.overlay(serverPlayer, Component.translatable("message.lasttrial.arena_locked"));
+				return InteractionResult.FAIL;
+			}
+			return InteractionResult.PASS;
 		});
 
 		// Фантомы мешают испытанию: пока идёт бой, в мир их не пускаем
