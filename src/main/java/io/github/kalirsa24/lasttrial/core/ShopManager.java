@@ -118,6 +118,12 @@ public class ShopManager {
 	/** Какой уровень Реликвии открыл игрок (для проверки покупки). */
 	private static final Map<UUID, RelicTier> shopTier = new java.util.HashMap<>();
 
+	/** Забыть состояние игрока при выходе: карты не должны расти бесконечно. */
+	public static void forget(UUID player) {
+		shopTier.remove(player);
+		LAST_BUY.remove(player);
+	}
+
 	/** Время последней покупки — защита от спама пакетами. */
 	private static final Map<UUID, Long> LAST_BUY = new java.util.HashMap<>();
 	private static final long BUY_COOLDOWN_MS = 120L;
@@ -420,7 +426,11 @@ public class ShopManager {
 			return false;
 		}
 
-		RelicTier currentTier = tierFor(player);
+		// Проверяем по фактическому тиру текущего забега, а не по «запомненному»
+		// при открытии магазина: иначе можно открыть витрину на вечной Реликвии
+		// и купить её товары, стоя у малой.
+		Trial activeTrial = TrialManager.of(player);
+		RelicTier currentTier = activeTrial != null ? activeTrial.tier() : tierFor(player);
 		if (!currentTier.allows(good.minTier())) {
 			Msg.overlay(player, Component.translatable("message.lasttrial.tier_locked",
 					Component.translatable("tier.lasttrial." + good.minTier().getId())));
@@ -430,7 +440,7 @@ public class ShopManager {
 		// настройки забега имеют смысл только во время испытания
 		boolean setting = SKIP_NOW_ID.equals(goodId) || HARD_MODE_ID.equals(goodId)
 				|| STOP_WAVE_ID.equals(goodId) || RESUME_WAVE_ID.equals(goodId);
-		Trial trial = TrialManager.of(player);
+		Trial trial = activeTrial;
 		if (setting && trial == null) {
 			Msg.overlay(player, Component.translatable("message.lasttrial.mode_no_trial"));
 			return false;

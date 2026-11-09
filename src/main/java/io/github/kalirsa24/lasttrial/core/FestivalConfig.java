@@ -2,7 +2,12 @@ package io.github.kalirsa24.lasttrial.core;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+import io.github.kalirsa24.lasttrial.FestivalMod;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
@@ -18,12 +23,22 @@ import java.nio.file.Path;
  * Всё, что раньше было константами в коде, теперь данные. Значения
  * проверяются и зажимаются в разумные рамки — сломанный конфиг не должен
  * ронять сервер и не должен позволять выкрутить бесконечных мобов.
+ *
+ * Загрузка идёт не через {@code Gson.fromJson(...)}, а через явное слияние
+ * с дефолтами: Gson создаёт объект в обход конструктора, поэтому любое
+ * поле, которого нет в файле (старый конфиг после обновления мода),
+ * получало бы 0/false. {@link #merge(JsonObject, FestivalConfig)} читает
+ * только те ключи, что реально есть, остальные оставляет дефолтными.
  */
 public final class FestivalConfig {
 
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final int MIN_STAGES = 1;
 	private static final int MAX_STAGES = 8;
+
+	public static final String FILE_NAME = "lasttrial.json";
+	/** Имя конфига до переименования мода — читается один раз для миграции. */
+	private static final String LEGACY_FILE_NAME = "festival.json";
 
 	private static FestivalConfig instance = new FestivalConfig();
 
@@ -66,39 +81,37 @@ public final class FestivalConfig {
 	 */
 	public boolean damageRules = true;
 
-	private FestivalConfig() {
+	/** Пакетный доступ — нужен тестам слияния конфига. */
+	FestivalConfig() {
 	}
 
 	public static FestivalConfig get() {
 		return instance;
 	}
 
+	// ------------------------------------------------------------------
+	// Загрузка и сохранение
+	// ------------------------------------------------------------------
+
 	public static void load() {
-		Path path = FabricLoader.getInstance().getConfigDir().resolve("festival.json");
+		Path dir = FabricLoader.getInstance().getConfigDir();
+		Path path = dir.resolve(FILE_NAME);
+		Path legacy = dir.resolve(LEGACY_FILE_NAME);
 		FestivalConfig loaded = new FestivalConfig();
 
-		if (Files.exists(path)) {
-			try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-				com.google.gson.JsonObject raw =
-						com.google.gson.JsonParser.parseReader(reader).getAsJsonObject();
-				FestivalConfig parsed = GSON.fromJson(raw, FestivalConfig.class);
-				if (parsed != null) {
-					// Gson создаёт объект в обход конструктора: булевы поля
-					// без ключа в файле получают false. Возвращаем дефолт.
-					if (!raw.has("damageRules")) {
-						parsed.damageRules = true;
-					}
-					if (!raw.has("maxActiveTrials")) {
-						parsed.maxActiveTrials = 3;
-					}
-					if (!raw.has("arenaUnloadStopSeconds")) {
-						parsed.arenaUnloadStopSeconds = 300;
-					}
-					loaded = parsed;
+		Path source = Files.exists(path) ? path : (Files.exists(legacy) ? legacy : null);
+		if (source != null) {
+			try (Reader reader = Files.newBufferedReader(source, StandardCharsets.UTF_8)) {
+				JsonElement root = JsonParser.parseReader(reader);
+				if (root.isJsonObject()) {
+					merge(root.getAsJsonObject(), loaded);
 				}
 			} catch (IOException | JsonSyntaxException | IllegalStateException e) {
-				io.github.kalirsa24.lasttrial.FestivalMod.LOGGER.warn(
-						"[Festival] Конфиг не прочитан, взяты значения по умолчанию: {}", e.getMessage());
+				FestivalMod.LOGGER.warn("[Festival] Конфиг не прочитан, взяты значения по умолчанию: {}",
+						e.getMessage());
+			}
+			if (!source.equals(path)) {
+				FestivalMod.LOGGER.info("[Festival] Конфиг {} перенесён в {}", LEGACY_FILE_NAME, FILE_NAME);
 			}
 		}
 
@@ -114,9 +127,88 @@ public final class FestivalConfig {
 				GSON.toJson(instance, writer);
 			}
 		} catch (IOException e) {
-			io.github.kalirsa24.lasttrial.FestivalMod.LOGGER.warn("[Festival] Конфиг не сохранён: {}", e.getMessage());
+			FestivalMod.LOGGER.warn("[Festival] Конфиг не сохранён: {}", e.getMessage());
 		}
 	}
+
+	/**
+	 * Слить JSON поверх дефолтов: читаем только присутствующие ключи.
+	 * Вынесено в отдельный статический метод, чтобы покрыть тестами.
+	 */
+	static void merge(JsonObject raw, FestivalConfig target) {
+		target.stagesPerWave = intOr(raw, "stagesPerWave", target.stagesPerWave);
+		target.dripTicks = intOr(raw, "dripTicks", target.dripTicks);
+		target.dripMinTicks = intOr(raw, "dripMinTicks", target.dripMinTicks);
+		target.stageTimeoutSeconds = intOr(raw, "stageTimeoutSeconds", target.stageTimeoutSeconds);
+		target.stageTimeoutPerMobTicks = intOr(raw, "stageTimeoutPerMobTicks",
+				target.stageTimeoutPerMobTicks);
+		target.flagEveryWaves = intOr(raw, "flagEveryWaves", target.flagEveryWaves);
+		target.stageStatBonus = doubleOr(raw, "stageStatBonus", target.stageStatBonus);
+		target.intermissionTicks = intOr(raw, "intermissionTicks", target.intermissionTicks);
+		target.spawnRadiusMin = doubleOr(raw, "spawnRadiusMin", target.spawnRadiusMin);
+		target.spawnRadiusMax = doubleOr(raw, "spawnRadiusMax", target.spawnRadiusMax);
+		target.spawnEffects = boolOr(raw, "spawnEffects", target.spawnEffects);
+		target.announceEveryStage = boolOr(raw, "announceEveryStage", target.announceEveryStage);
+		target.relicMissingGraceTicks = intOr(raw, "relicMissingGraceTicks",
+				target.relicMissingGraceTicks);
+		target.arenaUnloadStopSeconds = intOr(raw, "arenaUnloadStopSeconds",
+				target.arenaUnloadStopSeconds);
+		target.maxActiveTrials = intOr(raw, "maxActiveTrials", target.maxActiveTrials);
+		target.damageRules = boolOr(raw, "damageRules", target.damageRules);
+
+		JsonElement shares = raw.get("stageShares");
+		if (shares != null && shares.isJsonArray()) {
+			JsonArray array = shares.getAsJsonArray();
+			double[] parsed = new double[array.size()];
+			for (int i = 0; i < array.size(); i++) {
+				JsonElement element = array.get(i);
+				parsed[i] = element != null && element.isJsonPrimitive()
+						? element.getAsDouble() : 0.0D;
+			}
+			if (parsed.length > 0) {
+				target.stageShares = parsed;
+			}
+		}
+	}
+
+	private static int intOr(JsonObject raw, String key, int fallback) {
+		JsonElement element = raw.get(key);
+		if (element == null || !element.isJsonPrimitive()
+				|| !element.getAsJsonPrimitive().isNumber()) {
+			return fallback;
+		}
+		try {
+			return element.getAsInt();
+		} catch (NumberFormatException e) {
+			return fallback;
+		}
+	}
+
+	private static double doubleOr(JsonObject raw, String key, double fallback) {
+		JsonElement element = raw.get(key);
+		if (element == null || !element.isJsonPrimitive()
+				|| !element.getAsJsonPrimitive().isNumber()) {
+			return fallback;
+		}
+		try {
+			return element.getAsDouble();
+		} catch (NumberFormatException e) {
+			return fallback;
+		}
+	}
+
+	private static boolean boolOr(JsonObject raw, String key, boolean fallback) {
+		JsonElement element = raw.get(key);
+		if (element == null || !element.isJsonPrimitive()
+				|| !element.getAsJsonPrimitive().isBoolean()) {
+			return fallback;
+		}
+		return element.getAsBoolean();
+	}
+
+	// ------------------------------------------------------------------
+	// Валидация
+	// ------------------------------------------------------------------
 
 	/** Зажать значения в безопасные рамки: конфиг — это ввод пользователя. */
 	private void sanitize() {

@@ -48,6 +48,10 @@ public class ServerEvents {
 			WaveLibrary.reload(server.getResourceManager());
 		});
 
+		// Выход из игры: чистим персональные кэши магазина
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
+				ShopManager.forget(handler.player.getUUID()));
+
 		// Вход в игру: постоянные бонусы древа навыков
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			SkillManager.ensureLoaded(server.overworld());

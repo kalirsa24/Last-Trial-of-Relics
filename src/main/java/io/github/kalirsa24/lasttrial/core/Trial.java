@@ -70,6 +70,9 @@ public final class Trial {
 	private static final int PRESENCE_STEP = 20;
 	private static final double PRESENCE_RADIUS = ArenaValidator.RADIUS + 9.0D;
 
+	/** Радиус выдачи награды: чуть больше арены, чтобы не терять бойцов на краю. */
+	private static final double REWARD_RADIUS = ArenaValidator.RADIUS + 24.0D;
+
 	private final ServerLevel level;
 	private final BlockPos relicPos;
 	private final UUID owner;
@@ -196,7 +199,8 @@ public final class Trial {
 		// Выход в меню (одиночная игра) останавливает серверные тики.
 		// Возвращаемся — и текущая волна начинается заново, без «замороженных» мобов.
 		long now = System.currentTimeMillis();
-		if (lastTickMillis != 0L && now - lastTickMillis > PAUSE_GAP_MS) {
+		boolean singlePlayer = level.getServer() != null && !level.getServer().isDedicatedServer();
+		if (singlePlayer && lastTickMillis != 0L && now - lastTickMillis > PAUSE_GAP_MS) {
 			onPauseDetected();
 		}
 		lastTickMillis = now;
@@ -594,7 +598,7 @@ public final class Trial {
 		clearMobs();
 		RewardManager.finish(this, true);
 		hud.hide();
-		ArenaManager.clearFloor(relicPos);
+		ArenaManager.clearFloor(level, relicPos);
 		broadcast(Component.translatable("message.lasttrial.victory", maxWaves));
 		TrialManager.remove(this);
 	}
@@ -604,7 +608,7 @@ public final class Trial {
 		clearMobs();
 		RewardManager.finish(this, false);
 		hud.hide();
-		ArenaManager.clearFloor(relicPos);
+		ArenaManager.clearFloor(level, relicPos);
 		broadcast(Component.translatable("message.lasttrial.defeat"));
 
 		// Ломаем Реликвию без дропа — следующим тиком, чтобы не ломать блок изнутри его тика
@@ -623,7 +627,7 @@ public final class Trial {
 		}
 		clearMobs();
 		hud.hide();
-		ArenaManager.clearFloor(relicPos);
+		ArenaManager.clearFloor(level, relicPos);
 		TrialManager.remove(this);
 	}
 
@@ -929,6 +933,23 @@ public final class Trial {
 		for (ServerPlayer player : participants()) {
 			player.sendSystemMessage(message);
 		}
+	}
+
+	/**
+	 * Кому выдавать награду: только тем, кто реально находится у арены.
+	 * Владелец в другом конце мира и случайные прохожие в радиусе 96 блоков
+	 * раньше получали полную награду, ничего не делая.
+	 */
+	public List<ServerPlayer> rewardTargets() {
+		List<ServerPlayer> list = new ArrayList<>();
+		Vec3 center = Vec3.atCenterOf(relicPos);
+		double radiusSqr = REWARD_RADIUS * REWARD_RADIUS;
+		for (ServerPlayer player : level.players()) {
+			if (player.distanceToSqr(center) <= radiusSqr) {
+				list.add(player);
+			}
+		}
+		return list;
 	}
 
 	/** Участники забега: владелец и все, кто стоит рядом с Реликвией. */

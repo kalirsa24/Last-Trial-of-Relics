@@ -17,6 +17,12 @@ import java.util.List;
  */
 public final class ArenaTooltip {
 
+	/** Кэш: подсказка перерисовывается каждый кадр, а валидация читает ~100k блоков. */
+	private static final long CACHE_MS = 500L;
+	private static BlockPos cachedPos;
+	private static long cachedAt;
+	private static ArenaValidator.Result cached;
+
 	private ArenaTooltip() {
 	}
 
@@ -34,7 +40,7 @@ public final class ArenaTooltip {
 			return;
 		}
 
-		ArenaValidator.Result result = ArenaValidator.validate(minecraft.level, pos, 0.0D);
+		ArenaValidator.Result result = cachedResult(minecraft.level, pos);
 		boolean ready = result.floorRatio() >= 1.0D;
 
 		tooltip.add(Component.translatable("tooltip.lasttrial.arena_core_status",
@@ -44,6 +50,16 @@ public final class ArenaTooltip {
 						? "tooltip.lasttrial.arena_bonus_yes" : "tooltip.lasttrial.arena_bonus_no",
 						percent(result.bonusRatio()), percent(1.0D))
 				.withStyle(result.bonus() ? ChatFormatting.GREEN : ChatFormatting.YELLOW));
+	}
+
+	private static ArenaValidator.Result cachedResult(net.minecraft.world.level.Level level, BlockPos pos) {
+		long now = System.currentTimeMillis();
+		if (cached == null || !pos.equals(cachedPos) || now - cachedAt > CACHE_MS) {
+			cached = ArenaValidator.validate(level, pos, 0.0D);
+			cachedPos = pos.immutable();
+			cachedAt = now;
+		}
+		return cached;
 	}
 
 	private static String percent(double value) {

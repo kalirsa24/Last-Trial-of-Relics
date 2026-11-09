@@ -4,6 +4,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.ArrayList;
@@ -17,14 +19,29 @@ import java.util.UUID;
  * Арены мира и персональные настройки испытаний.
  * Арена принадлежит тому, кто её поставил; одному игроку — одна арена.
  *
+ * Арена помнит измерение: без этого одинаковые координаты в Обычном мире и
+ * Нижнем мире считались бы одной ареной, а снимок пола затирался бы чужим.
+ * Старые сохранения без поля {@code dim} читаются как Обычный мир.
+ *
  * В 1.20.1 {@link SavedData} сериализуется вручную в {@link CompoundTag}
  * (в 26.2 это был codec-based SavedDataType).
  */
 public class ArenaData extends SavedData {
 
 	public static final String NAME = "lasttrial_arenas";
+	private static final String DEFAULT_DIMENSION = "minecraft:overworld";
 
-	public record Arena(BlockPos pos, UUID owner, String ownerName) {
+	public record Arena(BlockPos pos, UUID owner, String ownerName, String dimension) {
+
+		public Arena {
+			if (dimension == null || dimension.isBlank()) {
+				dimension = DEFAULT_DIMENSION;
+			}
+		}
+
+		public boolean inDimension(String other) {
+			return dimension.equals(other);
+		}
 	}
 
 	private final List<Arena> arenas;
@@ -51,7 +68,8 @@ public class ArenaData extends SavedData {
 			try {
 				BlockPos pos = new BlockPos(entry.getInt("x"), entry.getInt("y"), entry.getInt("z"));
 				UUID owner = UUID.fromString(entry.getString("owner"));
-				arenas.add(new Arena(pos, owner, entry.getString("name")));
+				String dimension = entry.contains("dim") ? entry.getString("dim") : DEFAULT_DIMENSION;
+				arenas.add(new Arena(pos, owner, entry.getString("name"), dimension));
 			} catch (IllegalArgumentException ignored) {
 				// битая запись — пропускаем, остальные арены живут
 			}
@@ -75,6 +93,7 @@ public class ArenaData extends SavedData {
 			entry.putInt("z", arena.pos().getZ());
 			entry.putString("owner", arena.owner().toString());
 			entry.putString("name", arena.ownerName());
+			entry.putString("dim", arena.dimension());
 			list.add(entry);
 		}
 		tag.put("arenas", list);
@@ -97,8 +116,10 @@ public class ArenaData extends SavedData {
 		return arenas.stream().filter(arena -> arena.owner().equals(owner)).findFirst();
 	}
 
-	public Optional<Arena> at(BlockPos pos, int radius) {
+	/** Арена в этом измерении рядом с точкой. */
+	public Optional<Arena> at(BlockPos pos, int radius, String dimension) {
 		return arenas.stream()
+				.filter(arena -> arena.inDimension(dimension))
 				.filter(arena -> Math.abs(arena.pos().getX() - pos.getX()) <= radius
 						&& Math.abs(arena.pos().getZ() - pos.getZ()) <= radius)
 				.findFirst();
@@ -118,8 +139,9 @@ public class ArenaData extends SavedData {
 		return removed;
 	}
 
-	public boolean removeAt(BlockPos pos, int radius) {
-		boolean removed = arenas.removeIf(arena -> Math.abs(arena.pos().getX() - pos.getX()) <= radius
+	public boolean removeAt(BlockPos pos, int radius, String dimension) {
+		boolean removed = arenas.removeIf(arena -> arena.inDimension(dimension)
+				&& Math.abs(arena.pos().getX() - pos.getX()) <= radius
 				&& Math.abs(arena.pos().getZ() - pos.getZ()) <= radius);
 		if (removed) {
 			setDirty();
@@ -148,5 +170,11 @@ public class ArenaData extends SavedData {
 		if (waveOverrides.remove(player.toString()) != null) {
 			setDirty();
 		}
+	}
+
+	/** Id измерения для записи арены. */
+	public static String dimensionId(Level level) {
+		ResourceLocation id = level.dimension().location();
+		return id.toString();
 	}
 }

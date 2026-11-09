@@ -29,14 +29,14 @@ public final class RewardManager {
 			base += 1;
 		}
 
-		for (ServerPlayer player : trial.participants()) {
+		for (ServerPlayer player : trial.rewardTargets()) {
 			int coins = (int) Math.round(base * trial.rewardMultiplier(player));
 			player.getInventory().add(new ItemStack(ModItems.FESTIVAL_COIN, coins));
 		}
 
 		// Каждые 5 волн — награда, пир и бесплатная жизнь
 		if (wave % 5 == 0) {
-			for (ServerPlayer player : trial.participants()) {
+			for (ServerPlayer player : trial.rewardTargets()) {
 				int trophies = (int) Math.round(trial.rewardMultiplier(player));
 				TrophyItem.grant(player, trophies);
 				player.getInventory().add(new ItemStack(ModItems.FEAST, 1));
@@ -51,7 +51,7 @@ public final class RewardManager {
 
 		// Флаговая волна: лишняя награда за натиск
 		if (trial.isFlagWave()) {
-			for (ServerPlayer player : trial.participants()) {
+			for (ServerPlayer player : trial.rewardTargets()) {
 				TrophyItem.grant(player, (int) Math.round(trial.rewardMultiplier(player)));
 			}
 			trial.broadcast(Component.translatable("message.lasttrial.flag_bonus", wave));
@@ -59,7 +59,7 @@ public final class RewardManager {
 
 		// Каждые 15 волн — пропуск волн
 		if (wave % 15 == 0) {
-			for (ServerPlayer player : trial.participants()) {
+			for (ServerPlayer player : trial.rewardTargets()) {
 				player.getInventory().add(new ItemStack(ModItems.WAVE_SKIP, 1));
 			}
 			trial.broadcast(Component.translatable("message.lasttrial.wave_skip_reward", wave));
@@ -84,7 +84,7 @@ public final class RewardManager {
 			base += 1;
 		}
 
-		for (ServerPlayer player : trial.participants()) {
+		for (ServerPlayer player : trial.rewardTargets()) {
 			int trophies = (int) Math.round(base * trial.rewardMultiplier(player));
 			if (trophies > 0) {
 				TrophyItem.grant(player, trophies);

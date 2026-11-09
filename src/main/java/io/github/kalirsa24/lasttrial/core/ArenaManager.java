@@ -14,29 +14,32 @@ import java.util.UUID;
 /**
  * Арены мира: у каждой есть владелец, одному игроку — одна арена.
  * Админ может снять чужую арену.
+ *
+ * Данные лежат в Обычном мире ({@code getServer().overworld()}), а не в том
+ * измерении, где игрок поставил блок: иначе арены из Нижнего мира и Обычного
+ * мира оказывались бы в разных файлах и не видели друг друга. Принадлежность
+ * к измерению хранится в самой записи арены.
  */
 public class ArenaManager {
 
-	/** Пол арены по центру (позиции Реликвии): у каждого забега свой снимок. */
-	private static final Map<BlockPos, Map<BlockPos, BlockState>> FLOORS = new HashMap<>();
+	/** Снимки пола по аренам: ключ — измерение + позиция Реликвии. */
+	private static final Map<String, Map<BlockPos, BlockState>> FLOORS = new HashMap<>();
 
 	private static ArenaData data = null;
-	private static boolean loaded = false;
 
 	// ------------------------------------------------------------------
 	// Загрузка
 	// ------------------------------------------------------------------
 
 	public static void ensureLoaded(ServerLevel level) {
-		if (loaded && data != null) {
+		if (data != null) {
 			return;
 		}
-		data = level.getDataStorage().computeIfAbsent(ArenaData::load, ArenaData::new, ArenaData.NAME);
-		loaded = true;
+		ServerLevel storage = level.getServer() == null ? level : level.getServer().overworld();
+		data = storage.getDataStorage().computeIfAbsent(ArenaData::load, ArenaData::new, ArenaData.NAME);
 	}
 
 	public static void resetCache() {
-		loaded = false;
 		data = null;
 		FLOORS.clear();
 	}
@@ -53,12 +56,16 @@ public class ArenaManager {
 		return data == null ? Optional.empty() : data.ownedBy(owner);
 	}
 
-	public static Optional<ArenaData.Arena> arenaAt(BlockPos pos) {
-		return data == null ? Optional.empty() : data.at(pos, ArenaValidator.RADIUS + 4);
+	/** Арена в этом измерении рядом с точкой. */
+	public static Optional<ArenaData.Arena> arenaAt(ServerLevel level, BlockPos pos) {
+		if (data == null) {
+			return Optional.empty();
+		}
+		return data.at(pos, ArenaValidator.RADIUS + 4, ArenaData.dimensionId(level));
 	}
 
-	public static boolean isInside(BlockPos pos) {
-		return arenaAt(pos).isPresent();
+	public static boolean isInside(ServerLevel level, BlockPos pos) {
+		return arenaAt(level, pos).isPresent();
 	}
 
 	// ------------------------------------------------------------------
@@ -73,15 +80,18 @@ public class ArenaManager {
 		ensureLoaded(level);
 
 		if (arenaOf(player.getUUID()).isPresent()) {
-			return new ArenaValidator.Result(false, "arena.lasttrial.already_owned", 1.0D, 1.0D, 1.0D, false);
+			return new ArenaValidator.Result(false, "arena.lasttrial.already_owned",
+					1.0D, 1.0D, 1.0D, false);
 		}
-		if (arenaAt(pos).isPresent()) {
-			return new ArenaValidator.Result(false, "arena.lasttrial.occupied", 1.0D, 1.0D, 1.0D, false);
+		if (arenaAt(level, pos).isPresent()) {
+			return new ArenaValidator.Result(false, "arena.lasttrial.occupied",
+					1.0D, 1.0D, 1.0D, false);
 		}
 
 		ArenaValidator.Result result = ArenaValidator.validate(level, pos);
 		if (result.ok()) {
-			data().addArena(new ArenaData.Arena(pos, player.getUUID(), player.getScoreboardName()));
+			data().addArena(new ArenaData.Arena(pos, player.getUUID(), player.getScoreboardName(),
+					ArenaData.dimensionId(level)));
 		}
 		return result;
 	}
@@ -89,14 +99,14 @@ public class ArenaManager {
 	/** Снять свою арену. */
 	public static boolean removeOwn(ServerLevel level, ServerPlayer player) {
 		ensureLoaded(level);
-		arenaOf(player.getUUID()).ifPresent(arena -> FLOORS.remove(arena.pos()));
+		arenaOf(player.getUUID()).ifPresent(arena -> FLOORS.remove(floorKey(arena)));
 		return data().removeOwned(player.getUUID());
 	}
 
 	/** Снять арену игрока (для админа). */
 	public static boolean removeOf(ServerLevel level, UUID owner) {
 		ensureLoaded(level);
-		arenaOf(owner).ifPresent(arena -> FLOORS.remove(arena.pos()));
+		arenaOf(owner).ifPresent(arena -> FLOORS.remove(floorKey(arena)));
 		return data().removeOwned(owner);
 	}
 
@@ -133,12 +143,12 @@ public class ArenaManager {
 				}
 			}
 		}
-		FLOORS.put(center.immutable(), floor);
+		FLOORS.put(floorKey(level, center), floor);
 	}
 
 	/** Заделать дыры конкретной арены (не трогая чужие). */
 	public static void restoreFloor(ServerLevel level, BlockPos center) {
-		Map<BlockPos, BlockState> floor = FLOORS.get(center);
+		Map<BlockPos, BlockState> floor = FLOORS.get(floorKey(level, center));
 		if (floor == null) {
 			return;
 		}
@@ -150,7 +160,15 @@ public class ArenaManager {
 	}
 
 	/** Снять снимок пола (арена убрана или забег закончился). */
-	public static void clearFloor(BlockPos center) {
-		FLOORS.remove(center);
+	public static void clearFloor(ServerLevel level, BlockPos center) {
+		FLOORS.remove(floorKey(level, center));
+	}
+
+	private static String floorKey(ServerLevel level, BlockPos pos) {
+		return ArenaData.dimensionId(level) + "|" + pos.asLong();
+	}
+
+	private static String floorKey(ArenaData.Arena arena) {
+		return arena.dimension() + "|" + arena.pos().asLong();
 	}
 }

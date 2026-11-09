@@ -359,7 +359,7 @@ public class FestivalCommands {
 		ArenaManager.ensureLoaded((ServerLevel) player.level());
 
 		Optional<ArenaData.Arena> own = ArenaManager.arenaOf(player.getUUID());
-		Optional<ArenaData.Arena> here = ArenaManager.arenaAt(player.blockPosition());
+		Optional<ArenaData.Arena> here = ArenaManager.arenaAt((ServerLevel) player.level(), player.blockPosition());
 
 		if (own.isPresent()) {
 			BlockPos pos = own.get().pos();

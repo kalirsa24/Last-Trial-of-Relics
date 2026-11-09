@@ -5,7 +5,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -18,7 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Волны из датапака: {@code data/<namespace>/festival/waves.json}.
+ * Волны из датапака: {@code data/<namespace>/waves.json}.
  *
  * Если для волны и этапа есть явное описание — используется оно, иначе
  * состав собирается процедурно из бюджета. Формат:
@@ -32,6 +31,11 @@ import java.util.Optional;
  *
  * Файл перечитывается на старте сервера и на {@code /reload}; при ошибке
  * парсинга остаётся предыдущая версия — сервер не падает из-за кривого JSON.
+ *
+ * Раньше здесь использовался {@code FileToIdConverter.json("festival/waves")},
+ * который искал {@code data/<ns>/festival/waves/*.json} — то есть не находил
+ * ни наш собственный файл, ни файлы датапаков. Теперь перебираем namespace'ы
+ * и читаем {@code waves.json} в корне каждого.
  */
 public final class WaveLibrary {
 
@@ -59,13 +63,16 @@ public final class WaveLibrary {
 	public static void reload(ResourceManager manager) {
 		Map<Integer, List<List<WaveBudget.Type>>> parsed = new HashMap<>();
 
-		for (Map.Entry<ResourceLocation, Resource> entry
-				: FileToIdConverter.json("festival/waves").listMatchingResources(manager).entrySet()) {
-			try (Reader reader = entry.getValue().openAsReader()) {
+		for (String namespace : manager.getNamespaces()) {
+			ResourceLocation id = new ResourceLocation(namespace, "waves.json");
+			Optional<Resource> resource = manager.getResource(id);
+			if (resource.isEmpty()) {
+				continue;
+			}
+			try (Reader reader = resource.get().openAsReader()) {
 				parse(reader, parsed);
 			} catch (Exception e) {
-				FestivalMod.LOGGER.warn("[Festival] Волны из {} не прочитаны: {}",
-						entry.getKey(), e.getMessage());
+				FestivalMod.LOGGER.warn("[Festival] Волны из {} не прочитаны: {}", id, e.getMessage());
 			}
 		}
 

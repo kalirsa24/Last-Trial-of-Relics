@@ -1,6 +1,10 @@
 package io.github.kalirsa24.lasttrial.block;
 
 import io.github.kalirsa24.lasttrial.blockentity.RelicBlockEntity;
+import io.github.kalirsa24.lasttrial.core.ArenaData;
+import io.github.kalirsa24.lasttrial.core.ArenaManager;
+import io.github.kalirsa24.lasttrial.core.ArenaValidator;
+import io.github.kalirsa24.lasttrial.core.FestivalConfig;
 import io.github.kalirsa24.lasttrial.core.Msg;
 import io.github.kalirsa24.lasttrial.core.RelicTier;
 import io.github.kalirsa24.lasttrial.core.ShopManager;
@@ -22,6 +26,8 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 /**
  * Реликвия — центральный объект арены. ПКМ запускает «Празднество»,
@@ -76,12 +82,43 @@ public class RelicBlock extends Block implements EntityBlock {
 				ShopManager.open(serverPlayer, tier);
 				return InteractionResult.CONSUME;
 			}
-			if (TrialManager.of(serverPlayer) == null && TrialManager.at(serverLevel, pos) == null) {
-				TrialManager.start(serverLevel, pos, tier, serverPlayer);
-			} else {
-				Msg.overlay(serverPlayer, Component.translatable("message.lasttrial.already_running"));
-			}
+			tryStart(serverLevel, pos, serverPlayer);
 		}
 		return InteractionResult.CONSUME;
+	}
+
+	/**
+	 * Запуск забега с блока: те же проверки, что и у команды/клавиши —
+	 * целый пол, свободный слот и право владельца. Раньше ПКМ по блоку
+	 * обходил валидацию арены и позволял стартовать чужое испытание.
+	 */
+	private void tryStart(ServerLevel level, BlockPos pos, ServerPlayer player) {
+		if (TrialManager.of(player) != null || TrialManager.at(level, pos) != null) {
+			Msg.overlay(player, Component.translatable("message.lasttrial.already_running"));
+			return;
+		}
+
+		Optional<ArenaData.Arena> arena = ArenaManager.arenaAt(level, pos);
+		if (arena.isPresent() && !arena.get().owner().equals(player.getUUID())
+				&& !player.hasPermissions(2)) {
+			Msg.overlay(player, Component.translatable("message.lasttrial.arena_foreign_start",
+					arena.get().ownerName()));
+			return;
+		}
+
+		ArenaValidator.Result check = ArenaValidator.validate(level, pos, 1.0D);
+		if (!check.ok()) {
+			Msg.overlay(player, Component.translatable("message.lasttrial.arena_damaged",
+					Math.round(check.floorRatio() * 100.0D)));
+			return;
+		}
+
+		if (TrialManager.isFull()) {
+			Msg.overlay(player, Component.translatable("message.lasttrial.limit_reached",
+					FestivalConfig.get().maxActiveTrials));
+			return;
+		}
+
+		TrialManager.start(level, pos, tier, player);
 	}
 }
