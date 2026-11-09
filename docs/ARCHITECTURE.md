@@ -271,7 +271,7 @@ Trial.tick (каждый серверный тик, через TrialManager.tick
 | `block/RelicBlock.java` | Блок-алтарь: ПКМ — старт, Shift+ПКМ — магазин, тикер блочной сущности | `TrialManager`, `ShopManager`, `RelicBlockEntity` |
 | `blockentity/RelicBlockEntity.java` | Здоровье алтаря, регенерация, сохранение/восстановление забега в NBT | `Trial`, `TrialManager`, `ModBlockEntities` |
 | `command/FestivalCommands.java` | Все команды `/lasttrial`: start, shop, buy, skill, lives, wave, arena, admin | `GameManager`, `ShopManager`, `SkillManager`, `ArenaManager` |
-| `core/ArenaData.java` | SavedData арен и переопределений волн, ручная сериализация в NBT | `ArenaManager` |
+| `core/ArenaData.java` | SavedData арен (с измерением) и переопределений волн, ручная сериализация в NBT | `ArenaManager` |
 | `core/ArenaManager.java` | Реестр арен, регистрация/снятие, снимок и восстановление пола | `ArenaData`, `ArenaValidator` |
 | `core/ArenaValidator.java` | Проверка площадки 20×20 / 30×30 и неба, возвращает проценты | `ArenaManager`, `RelicItem`, `ArenaTooltip` |
 | `core/Economy.java` | Чистая математика цен: наценки на оружие, множитель за вложения, округление | `ShopManager`, тесты |
@@ -354,7 +354,7 @@ Trial.tick (каждый серверный тик, через TrialManager.tick
 | `data/lasttrial/loot_tables/blocks/*.json` | Дроп блоков (алтари и плитка) |
 | `data/lasttrial/loot_tables/chests/festival_key.json` | Лут сундука из ключа: тотемы по весам, монеты, пир |
 | `data/lasttrial/recipes/*.json` | Крафты алтарей и плитки |
-| `data/lasttrial/waves.json` | Явные составы волн (пустой массив = всё процедурно) |
+| `data/<namespace>/waves.json` | Явные составы волн (пустой массив = всё процедурно) |
 
 ---
 
@@ -364,11 +364,13 @@ Trial.tick (каждый серверный тик, через TrialManager.tick
   автоматы, снайперки, патроны), порог множителя цен, округление.
 - `src/test/java/.../core/RelicTierTest.java` — число волн, совместимость тиров,
   fallback для неизвестного id.
+- `src/test/java/.../core/FestivalConfigTest.java` — слияние конфига с дефолтами,
+  частичный JSON, массив долей, ключи неверного типа.
 - `.github/workflows/build.yml` — сборка и тесты на каждый push/PR в `main`,
   артефакт `build/libs/*.jar` прикладывается к прогону.
 
-Тесты намеренно не трогают Minecraft-мир: проверяется математика, которую легко
-сломать правкой баланса.
+Всего 22 теста. Они намеренно не трогают Minecraft-мир: проверяется математика
+и загрузка конфига — то, что легко сломать правкой баланса.
 
 ## 13. Ограничения и компромиссы
 

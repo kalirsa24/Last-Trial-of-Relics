@@ -11,7 +11,7 @@
 Игрок отбивается, тратит монеты в магазине и вкладывает персональные награды
 в вечное древо навыков.
 
-**Mod id:** `lasttrial` · **Jar:** `last_trial_of_relics-0.3.0.jar` · **Java:** 17
+**Mod id:** `lasttrial` · **Jar:** `last_trial_of_relics-0.4.0.jar` · **Java:** 17
 
 ---
 
@@ -32,7 +32,7 @@
 
 1. Minecraft **1.20.1** + **Fabric Loader 0.16.10+**.
 2. [Fabric API](https://modrinth.com/mod/fabric-api) **0.92.12+1.20.1**.
-3. Положите `last_trial_of_relics-0.3.0.jar` в папку `mods`.
+3. Положите `last_trial_of_relics-0.4.0.jar` в папку `mods`.
 4. TACZ **не обязателен** — без него мод работает, просто вкладки оружия пустые.
 
 ## Как играть
@@ -112,7 +112,7 @@
   базовую цену без наценки.
 - **Моды на урон и броню** — при конфликте отключите `damageRules` в конфиге,
   тогда мод не трогает урон вообще.
-- **Датапаки** — составы волн можно задать в `data/<namespace>/lasttrial/waves.json`;
+- **Датапаки** — составы волн можно задать в `data/<namespace>/waves.json`;
   файл перечитывается на `/reload`, кривой JSON не роняет сервер.
 
 ## Баланс
@@ -154,6 +154,8 @@ src/test/java/...             юнит-тесты
 ```
 
 Подробное описание каждого файла — [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+Аудит проекта и план развития — [`docs/AUDIT.md`](docs/AUDIT.md).
+История версий — [`CHANGELOG.md`](CHANGELOG.md).
 Разбор слабых мест и планов — [`docs/REVIEW.md`](docs/REVIEW.md).
 
 ## Известные ограничения
