@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "festival:block/relic",
+    "down": "festival:block/relic_top",
+    "up": "festival:block/relic_top",
+    "north": "festival:block/relic",
+    "south": "festival:block/relic",
+    "east": "festival:block/relic",
+    "west": "festival:block/relic"
+  }
+}

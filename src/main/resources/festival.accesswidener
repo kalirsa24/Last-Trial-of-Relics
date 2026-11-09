@@ -1,0 +1,5 @@
+accessWidener	v2	named
+
+# Доступ к селектору целей моба: нужно, чтобы навешивать RelicAttackGoal
+# на любых мобов (в том числе ванильных и из других модов).
+accessible	field	net/minecraft/world/entity/Mob	goalSelector	Lnet/minecraft/world/entity/ai/goal/GoalSelector;

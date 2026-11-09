@@ -1,0 +1,80 @@
+plugins {
+	id 'fabric-loom' version "${loom_version}"
+	id 'maven-publish'
+}
+
+version = project.version
+group = project.group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	// Loom сам добавляет репозитории Minecraft и Fabric.
+	// TACZ под 1.20.1 подключается локальным jar из libs/.
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	accessWidenerPath = file("src/main/resources/festival.accesswidener")
+
+	mods {
+		"festival" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	// Mojmap: имена классов остаются теми же, что в 26.2 — порт дешевле.
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// TACZ 1.20.1: только для компиляции, в рантайме берётся из mods.
+	// compileOnly files("libs/tacz-1.20.1.jar")  // включим, когда появится jar 1.20.1
+
+	testImplementation "org.junit.jupiter:junit-jupiter-api:5.11.4"
+	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.11.4"
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+	testLogging {
+		events "passed", "failed", "skipped"
+	}
+}
+
+processResources {
+	def version = project.version
+	inputs.property "version", version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 17
+	it.options.encoding = 'UTF-8'
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
+}
+
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			from components.java
+		}
+	}
+	repositories {
+	}
+}
