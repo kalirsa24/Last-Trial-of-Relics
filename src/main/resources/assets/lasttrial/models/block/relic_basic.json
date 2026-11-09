@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "lasttrial:block/relic_basic",
+    "down": "lasttrial:block/relic_basic_top",
+    "up": "lasttrial:block/relic_basic_top",
+    "north": "lasttrial:block/relic_basic",
+    "south": "lasttrial:block/relic_basic",
+    "east": "lasttrial:block/relic_basic",
+    "west": "lasttrial:block/relic_basic"
+  }
+}

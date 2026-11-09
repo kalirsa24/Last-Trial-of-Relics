@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "festival",
+	"id": "lasttrial",
 	"version": "${version}",
 	"name": "Last Trial of Relics",
 	"description": "Last Trial of Relics: defend the Relic through waves of mobs, upgrade totems and skills. Fabric 1.20.1 port.",
@@ -8,18 +8,18 @@
 		"stal"
 	],
 	"license": "All Rights Reserved",
-	"icon": "assets/festival/icon.png",
-	"accessWidener": "festival.accesswidener",
+	"icon": "assets/lasttrial/icon.png",
+	"accessWidener": "lasttrial.accesswidener",
 	"mixins": [
-		"festival.mixins.json"
+		"lasttrial.mixins.json"
 	],
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.example.festival.FestivalMod"
+			"io.github.kalirsa24.lasttrial.FestivalMod"
 		],
 		"client": [
-			"com.example.festival.client.FestivalClient"
+			"io.github.kalirsa24.lasttrial.client.FestivalClient"
 		]
 	},
 	"depends": {

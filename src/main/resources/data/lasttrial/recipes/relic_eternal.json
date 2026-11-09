@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "key": {
+    "R": {
+      "item": "lasttrial:relic_basic"
+    },
+    "E": {
+      "item": "lasttrial:relic"
+    }
+  },
+  "pattern": [
+    "RRR",
+    "RER",
+    "RRR"
+  ],
+  "result": {
+    "item": "lasttrial:relic_eternal",
+    "count": 1
+  }
+}
